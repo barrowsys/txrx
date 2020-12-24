@@ -3,6 +3,11 @@
 
 #include "Crc16.h"
 
+// Ideally this would be set when the NanoNet object is constructed,
+// but you can only use static functions as interrupt routines,
+// so i have to have this, NN_rx_buf, NN_new_bit, and _NN_onClockPulse all outside the class.
+//
+// its really bad but it works
 #ifndef NN_clockPin
 #define NN_clockPin 2
 #endif
@@ -90,6 +95,7 @@ class NanoNet {
 // tl;dr this lets me do if(the byte doesnt send) {return false} without having to write that out 30 times
 // never used the c preprocessor beyond basic object defines until this so thats cool
 #define _NN_SEND_BYTE(TX_BYTE) if(!_sendByte(TX_BYTE)) { digitalWrite(NN_clockPin, LOW); digitalWrite(NN_dataPin, LOW); pinMode(NN_clockPin, INPUT); pinMode(NN_dataPin, INPUT); return false; }
+
 bool NanoNet::_sendByte(byte tx_byte) {
   for (int bit_idx = 0; bit_idx < 8; bit_idx++) {
     bool tx_bit = tx_byte & (0x80 >> bit_idx);
@@ -127,7 +133,7 @@ bool NanoNet::sendFrame(char *payload) {
   digitalWrite(NN_clockPin, LOW);
   digitalWrite(NN_dataPin, LOW);
   Serial.println("Sending start header");
-  // our recieve buffer is 16 bytes, and 0xFF shouldnt reaaaally be intentionally transmitted,
+  // our recieve buffer is 16 bits, and 0xFF shouldnt reaaaally be intentionally transmitted,
   // so we can use that in front of our start header byte to make a start transmission doublebyte
   _NN_SEND_BYTE(0xFF);
   _NN_SEND_BYTE(0x02);
