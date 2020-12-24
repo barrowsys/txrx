@@ -54,7 +54,7 @@ void _NN_onClockPulse() {
 class NanoNet {
   private:
     byte _txRate; // In bits per second
-	// How many divisions of a clock cycle to check for other transmitters...
+    // How many divisions of a clock cycle to check for other transmitters...
     byte _caRate; //...before transmitting
     byte _cdRate; //...while transmitting
     NanoNetState _state;
@@ -67,7 +67,7 @@ class NanoNet {
       _state = NN_IDLE;
       pinMode(NN_clockPin, INPUT);
       pinMode(NN_dataPin, INPUT);
-	  // TODO: dont do this
+      // TODO: dont do this
       attachInterrupt(digitalPinToInterrupt(NN_clockPin), _NN_onClockPulse, RISING);
     }
     inline NanoNet(byte txRate) {
@@ -77,7 +77,7 @@ class NanoNet {
       _state = NN_IDLE;
       pinMode(NN_clockPin, INPUT);
       pinMode(NN_dataPin, INPUT);
-	  // TODO: dont do this
+      // TODO: dont do this
       attachInterrupt(digitalPinToInterrupt(NN_clockPin), _NN_onClockPulse, RISING);
     }
     bool sendFrame(char* payload);
@@ -93,9 +93,9 @@ class NanoNet {
 bool NanoNet::_sendByte(byte tx_byte) {
   for (int bit_idx = 0; bit_idx < 8; bit_idx++) {
     bool tx_bit = tx_byte & (0x80 >> bit_idx);
-	// Write data to pin,, then wait half a tick, THEN turn the clock signal on
+    // Write data to pin,, then wait half a tick, THEN turn the clock signal on
     digitalWrite(NN_dataPin, tx_bit);
-	// While the clock is off, check that it really is off _cdRate times 
+    // While the clock is off, check that it really is off _cdRate times 
     for (int cd_idx = 0; cd_idx < _cdRate; cd_idx++) {
       delay((1000 / _txRate) / (_cdRate * 2));
       if (digitalRead(NN_clockPin)) {
@@ -164,35 +164,35 @@ bool NanoNet::recieveFrame(char *buf) {
   _state = NN_RX_WAITING;
   while (true) {
     if (NN_new_bit == true) {
-	  // Step 2
+      // Step 2
       if (_state == NN_RX_FRAME) {
         if (++bit_pos == 8) {
           bit_pos = 0;
           if (NN_rx_buf.b[0] == NN_ETX) {
-			// This ends step 2
+    		// This ends step 2
             Serial.println("Entered CRC");
             buf[buf_pos++] = 0x00;
             _state = NN_RX_CRC;
             buf_pos = 0;
           } else {
-		    // This is the meat of step 2
+    	    // This is the meat of step 2
             buf[buf_pos++] = NN_rx_buf.b[0];
             NN_crc.updateCrc(NN_rx_buf.b[0]);
           }
         }
       } else if (_state = NN_RX_CRC) {
-		// Step 3
+    	// Step 3
         bit_pos++;
         if (bit_pos == 8) {
-		  // Step 3.1
+    	  // Step 3.1
           rx_crc.b[0] = NN_rx_buf.b[0];
           Serial.println("Got First CRC Byte");
         } else if (bit_pos == 16) {
-		  // Step 3.2
+    	  // Step 3.2
           rx_crc.b[1] = NN_rx_buf.b[0];
           Serial.println("Got Second CRC Byte");
         } else if (bit_pos == 24 && NN_rx_buf.b[0] == NN_EOT) {
-		  // Step 3.3
+    	  // Step 3.3
           if (NN_crc.getCrc() != rx_crc.s) {
             Serial.println("Bad data");
           } else {
@@ -201,7 +201,7 @@ bool NanoNet::recieveFrame(char *buf) {
           }
         }
       }
-	  // Step 1
+      // Step 1
       if (NN_rx_buf.s == NN_SOT) {
         _state = NN_RX_FRAME;
         bit_pos = 0;
