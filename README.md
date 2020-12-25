@@ -6,5 +6,6 @@ https://youtu.be/D0HsFuK1VK4
 
 # Frame Structure
 |      | Preamble | Destination | Source | Start Text | Payload | End Text | CRC     | Ending |
+|------|----------|-------------|--------|------------|---------|----------|---------|--------|
 | Data | 0xFF01   | 1 byte      | 1 byte | 0x02       |         | 0x03     | 2 bytes | 0x04   |
 | CRC? | No       | Yes         | Yes    | No         | Yes     | No       | No      | No     |
