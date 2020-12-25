@@ -1,6 +1,8 @@
-the interesting stuff is in transmitframe and recieveframe,, all three NanoNet.h files are hardlinked on my system
+the subdirectories are arduino projects.
+the NanoNet.h files in them are hardlinked to the top directory's version.
+run ./update_links.sh to re-link them all.
 
-dont expect anything to stay the same ever im just fuckin around
+dont expect anything to stay the same or even work at all im just fuckin around
 
 https://youtu.be/D0HsFuK1VK4
 
