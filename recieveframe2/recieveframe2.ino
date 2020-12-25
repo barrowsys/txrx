@@ -13,11 +13,11 @@
 #include "NanoNet.h"
 
 char rx_buf[1024];
-NanoNet nanonet = NanoNet(0x01);
+NanoNet nanonet = NanoNet(0x04);
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("I'm 0x01 (Recieve Only)");
+  Serial.println("I'm 0x04 (Recieve Only)");
 }
 
 void loop() {
