@@ -27,24 +27,24 @@ void setup() {
 
 void loop() {
   if(digitalRead(12)) {
-    Serial.println("Sending to 0x01... >>");
+    Serial.println("Sending to 0x01... <<");
     while(!nanonet.sendFrame(message1, 0x01)) { delay(100); }
-    Serial.println("Successfully sent to 0x01 >>");
-    Serial.println("Recieving from 0x03... vv");
+    Serial.println("Successfully sent to 0x01 <<");
+    Serial.println("Recieving from 0x03... //");
     byte r;
     do {
       r = nanonet.recieveFrame(message_buf+26);
     } while(r == 0);
-    Serial.println("Successfully recieved from 0x03 vv");
+    Serial.println("Successfully recieved from 0x03 //");
     char shortbuf[2];
     itoa(r, shortbuf, 16);
     message_buf[23] = shortbuf[0];
-    Serial.println("Relaying to 0x01... >>");
+    Serial.println("Relaying to 0x01... <<");
     while(!nanonet.sendFrame(message_buf, 0x01)) {delay(100);}
-    Serial.println("Successfully relayed to 0x01 >>");
-    Serial.println("Sending to 0x04... \\\\");
+    Serial.println("Successfully relayed to 0x01 <<");
+    Serial.println("Sending to 0x04... vv");
     while(!nanonet.sendFrame(message2, 0x04)) { delay(100); }
-    Serial.println("Successfully sent to 0x04 \\\\");
+    Serial.println("Successfully sent to 0x04 vv");
     delay(1000);
   }
 }
