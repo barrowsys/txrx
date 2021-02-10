@@ -26,12 +26,12 @@ void setup() {
 void loop() {
   if(digitalRead(12)) {
     delay(500);
-    Serial.println("Sending to 0x01 //");
+    Serial.println("Sending to 0x01 ^^");
     while(!nanonet.sendFrame(message2, 0x01)) { delay(100); }
-    Serial.println("Successfully sent to 0x01 //");
-    Serial.println("Sending to 0x02 ^^");
+    Serial.println("Successfully sent to 0x01 ^^");
+    Serial.println("Sending to 0x02 //");
     while(!nanonet.sendFrame(message1, 0x02)) { delay(100); }
-    Serial.println("Successfully sent to 0x02 ^^");
+    Serial.println("Successfully sent to 0x02 //");
     delay(1000);
   }
 }

@@ -19,12 +19,10 @@
 // so i have to have this, NN_rx_buf, NN_new_bit, and _NN_onClockPulse all outside the class.
 //
 // its really bad but it works
-#ifndef NN_clockPin
 #define NN_clockPin 2
-#endif
-#ifndef NN_dataPin
-#define NN_dataPin 3
-#endif
+#define NN_dataPin 4
+#define NN_clockPin2 3
+#define NN_dataPin2 5
 
 // Enables Trace Logging To Serial
 /* #define DEBUG */
@@ -53,21 +51,32 @@ typedef enum State {
 Crc16 NN_crc;
 
 // the last 16 bits recieved from the bus
-volatile twobytes NN_rx_buf;
+volatile twobytes NN_rx_buf[2];
 // flag to notify the instance functions that data has arrived
-volatile bool NN_new_bit;
+volatile bool NN_new_bit[2];
 // This is really bad and evil but it works as long as nobody tries to make two NanoNet instances
 // Necessary because attachInterrupt needs a static function handler
 void _NN_onClockPulse() {
   bool rx_bit = digitalRead(NN_dataPin);
 
   // Shift the buffer left 1 bit and set the new lowest bit
-  NN_rx_buf.s = NN_rx_buf.s << 1;
+  NN_rx_buf[0].s = NN_rx_buf[0].s << 1;
   if (rx_bit) {
-    NN_rx_buf.s |= 0x01;
+    NN_rx_buf[0].s |= 0x01;
   }
 
-  NN_new_bit = true;
+  NN_new_bit[0] = true;
+}
+void _NN_onClockPulse2() {
+  bool rx_bit = digitalRead(NN_dataPin2);
+
+  // Shift the buffer left 1 bit and set the new lowest bit
+  NN_rx_buf[1].s = NN_rx_buf[1].s << 1;
+  if (rx_bit) {
+    NN_rx_buf[1].s |= 0x01;
+  }
+
+  NN_new_bit[1] = true;
 }
 
 class NanoNet {
@@ -78,14 +87,29 @@ class NanoNet {
     byte _cdRate = 4; //...while transmitting
     NanoNetState _state = NN_IDLE;
     bool _sendByte(byte tx_byte);
+	byte _clockPin;
+	byte _dataPin;
+	byte _register;
   public:
     byte _address;
-    inline NanoNet(byte address) {
+	inline NanoNet() {}
+    inline NanoNet(byte address, bool isSecondNIC) {
+	  if(isSecondNIC) {
+		_register = 1;
+		_clockPin = NN_clockPin2;
+		_dataPin = NN_dataPin2;
+		attachInterrupt(digitalPinToInterrupt(_clockPin), _NN_onClockPulse2, RISING);
+	  } else {
+		_register = 0;
+		_clockPin = NN_clockPin;
+		_dataPin = NN_dataPin;
+		attachInterrupt(digitalPinToInterrupt(_clockPin), _NN_onClockPulse, RISING);
+	  }
       _address = address;
-      pinMode(NN_clockPin, INPUT);
-      pinMode(NN_dataPin, INPUT);
-      // TODO: dont do this
-      attachInterrupt(digitalPinToInterrupt(NN_clockPin), _NN_onClockPulse, RISING);
+      pinMode(_clockPin, INPUT);
+      pinMode(_dataPin, INPUT);
+      /* // TODO: dont do this */
+      /* attachInterrupt(digitalPinToInterrupt(_clockPin), _NN_onClockPulse, RISING); */
     }
     bool sendFrame(char* payload, byte addr);
     byte recieveFrame(char *buf);
@@ -96,26 +120,26 @@ class NanoNet {
 // in this case the invention is exceptions but those are evil
 // tl;dr this lets me do if(the byte doesnt send) {return false} without having to write that out 30 times
 // never used the c preprocessor beyond basic object defines until this so thats cool
-#define _NN_SEND_BYTE(TX_BYTE) if(!_sendByte(TX_BYTE)) { digitalWrite(NN_clockPin, LOW); digitalWrite(NN_dataPin, LOW); pinMode(NN_clockPin, INPUT); pinMode(NN_dataPin, INPUT); digitalWrite(13, LOW); return false; }
+#define _NN_SEND_BYTE(TX_BYTE) if(!_sendByte(TX_BYTE)) { digitalWrite(_clockPin, LOW); digitalWrite(_dataPin, LOW); pinMode(_clockPin, INPUT); pinMode(_dataPin, INPUT); digitalWrite(13, LOW); return false; }
 
 bool NanoNet::_sendByte(byte tx_byte) {
   for (int bit_idx = 0; bit_idx < 8; bit_idx++) {
     bool tx_bit = tx_byte & (0x80 >> bit_idx);
     // Write data to pin,, then wait half a tick, THEN turn the clock signal on
-    digitalWrite(NN_dataPin, tx_bit);
+    digitalWrite(_dataPin, tx_bit);
     // While the clock is off, check that it really is off _cdRate times 
     for (int cd_idx = 0; cd_idx < _cdRate; cd_idx++) {
       delay((1000 / _txRate) / (_cdRate * 2));
-      if (digitalRead(NN_clockPin)) {
+      if (digitalRead(_clockPin)) {
 #ifdef DEBUG
         Serial.println("Collision detected, abort");
 #endif
         return false;
       }
     }
-    digitalWrite(NN_clockPin, HIGH);
+    digitalWrite(_clockPin, HIGH);
     delay((1000 / _txRate) / 2);
-    digitalWrite(NN_clockPin, LOW);
+    digitalWrite(_clockPin, LOW);
   }
   return true;
 }
@@ -128,7 +152,7 @@ bool NanoNet::sendFrame(char *payload, byte destination) {
   // Make sure the bus isnt in use
   for (int ca_idx = 0; ca_idx < _caRate; ca_idx++) {
     delay((1000 / _txRate) / _caRate);
-    if (digitalRead(NN_clockPin)) {
+    if (digitalRead(_clockPin)) {
 #ifdef DEBUG
       Serial.println("Signal found, abort");
 #endif
@@ -139,10 +163,10 @@ bool NanoNet::sendFrame(char *payload, byte destination) {
   Serial.println("No signal found");
 #endif
   digitalWrite(13, HIGH);
-  pinMode(NN_clockPin, OUTPUT);
-  pinMode(NN_dataPin, OUTPUT);
-  digitalWrite(NN_clockPin, LOW);
-  digitalWrite(NN_dataPin, LOW);
+  pinMode(_clockPin, OUTPUT);
+  pinMode(_dataPin, OUTPUT);
+  digitalWrite(_clockPin, LOW);
+  digitalWrite(_dataPin, LOW);
 #ifdef DEBUG
   Serial.println("Sending start header");
 #endif
@@ -178,10 +202,10 @@ bool NanoNet::sendFrame(char *payload, byte destination) {
   _NN_SEND_BYTE(NN_EOT);
   // make sure everything is back to floating
   // this is also done by the _NN_SEND_BYTE macro
-  digitalWrite(NN_clockPin, LOW);
-  digitalWrite(NN_dataPin, LOW);
-  pinMode(NN_clockPin, INPUT);
-  pinMode(NN_dataPin, INPUT);
+  digitalWrite(_clockPin, LOW);
+  digitalWrite(_dataPin, LOW);
+  pinMode(_clockPin, INPUT);
+  pinMode(_dataPin, INPUT);
   digitalWrite(13, LOW);
   _state = NN_IDLE;
   return true;
@@ -197,30 +221,30 @@ byte NanoNet::recieveFrame(char *buf) {
   byte destination = 0;
   byte source = 0;
   while (true) {
-    if (NN_new_bit == true) {
+    if (NN_new_bit[_register] == true) {
       if(_state == NN_RX_HEADER) {
       // Step 2
         bit_pos++;
         if(bit_pos == 8) {
         // Step 2.1
-          if (NN_rx_buf.b[0] != _address) {
+          if (NN_rx_buf[_register].b[0] != _address) {
             _state = NN_RX_WAITING;
           } else {
-            destination = NN_rx_buf.b[0];
-            NN_crc.updateCrc(NN_rx_buf.b[0]);
+            destination = NN_rx_buf[_register].b[0];
+            NN_crc.updateCrc(NN_rx_buf[_register].b[0]);
 #ifdef DEBUG
             Serial.println("Got Destination Byte");
 #endif
           }
         } else if(bit_pos == 16) {
         // Step 2.2
-          source = NN_rx_buf.b[0];
-          NN_crc.updateCrc(NN_rx_buf.b[0]);
+          source = NN_rx_buf[_register].b[0];
+          NN_crc.updateCrc(NN_rx_buf[_register].b[0]);
 #ifdef DEBUG
           Serial.println("Got Source Byte");
 #endif
         } else if(bit_pos % 8 == 0) {
-          if(NN_rx_buf.b[0] == NN_STX) {
+          if(NN_rx_buf[_register].b[0] == NN_STX) {
           // Step 2.4
 #ifdef DEBUG
             Serial.println("End of Header");
@@ -230,14 +254,14 @@ byte NanoNet::recieveFrame(char *buf) {
           } else {
           // Step 2.3
             // This ensures backwards compatibility
-            NN_crc.updateCrc(NN_rx_buf.b[0]);
+            NN_crc.updateCrc(NN_rx_buf[_register].b[0]);
           }
         }
       } else if (_state == NN_RX_PAYLOAD) {
       // Step 3
         if (++bit_pos == 8) {
           bit_pos = 0;
-          if (NN_rx_buf.b[0] == NN_ETX) {
+          if (NN_rx_buf[_register].b[0] == NN_ETX) {
   		    // Step 3.2
 #ifdef DEBUG
             Serial.println("Entered CRC");
@@ -247,8 +271,8 @@ byte NanoNet::recieveFrame(char *buf) {
             buf_pos = 0;
           } else {
   	      // Step 3.1
-            buf[buf_pos++] = NN_rx_buf.b[0];
-            NN_crc.updateCrc(NN_rx_buf.b[0]);
+            buf[buf_pos++] = NN_rx_buf[_register].b[0];
+            NN_crc.updateCrc(NN_rx_buf[_register].b[0]);
           }
         }
       } else if (_state = NN_RX_CRC) {
@@ -256,17 +280,17 @@ byte NanoNet::recieveFrame(char *buf) {
         bit_pos++;
         if (bit_pos == 8) {
     	  // Step 4.1
-          rx_crc.b[0] = NN_rx_buf.b[0];
+          rx_crc.b[0] = NN_rx_buf[_register].b[0];
 #ifdef DEBUG
           Serial.println("Got First CRC Byte");
 #endif
         } else if (bit_pos == 16) {
     	  // Step 4.2
-          rx_crc.b[1] = NN_rx_buf.b[0];
+          rx_crc.b[1] = NN_rx_buf[_register].b[0];
 #ifdef DEBUG
           Serial.println("Got Second CRC Byte");
 #endif
-        } else if (bit_pos == 24 && NN_rx_buf.b[0] == NN_EOT) {
+        } else if (bit_pos == 24 && NN_rx_buf[_register].b[0] == NN_EOT) {
     	  // Step 4.3
           if (NN_crc.getCrc() != rx_crc.s) {
 #ifdef DEBUG
@@ -278,7 +302,7 @@ byte NanoNet::recieveFrame(char *buf) {
           }
         }
       }
-      if (NN_rx_buf.b[1] == 0xFF && NN_rx_buf.b[0] == NN_SOH) {
+      if (NN_rx_buf[_register].b[1] == 0xFF && NN_rx_buf[_register].b[0] == NN_SOH) {
       // Step 1
         _state = NN_RX_HEADER;
         bit_pos = 0;
@@ -288,7 +312,7 @@ byte NanoNet::recieveFrame(char *buf) {
         Serial.println("Entered Frame");
 #endif
       }
-      NN_new_bit = false;
+      NN_new_bit[_register] = false;
     }
   }
   _state = NN_IDLE;
