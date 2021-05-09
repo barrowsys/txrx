@@ -35,7 +35,7 @@ typedef enum State {
 
 class NanoNet {
 	private:
-		short _tx_rate = 20; // Clock rate in bits per second
+		short _tx_rate = _TX_RATE; // Clock rate in bits per second
 		// How many times during one clock cycle to check for busy line...
 		short _ca_rate = 4; //...before transmitting (collision avoidance)
 		short _cd_rate = 4; //...while transmitting (collision detection)
