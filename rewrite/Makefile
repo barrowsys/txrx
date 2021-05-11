@@ -7,8 +7,8 @@ ARDUINO2_FQBN = "arduino:avr:nano"
 
 NN_ADDR1 = 0x01
 NN_ADDR2 = 0x02
-DEBUG_LEVEL = 0
-TX_RATE = 20
+DEBUG_LEVEL = -1
+TX_RATE = 200
 
 ARDUINO_DIR = $(HOME)/Downloads/arduino-1.8.13
 ARDUINO_CLI = $(ARDUINO_DIR)/bin/arduino-cli

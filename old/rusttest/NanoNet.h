@@ -1,5 +1,8 @@
 /**
- * THIS FILE IS LICENSED UNDER MIT
+ * THIS FILE IS LICENSED UNDER THE FOLLOWING TERMS
+ *
+ * this code may not be used for any purpose. be gay, do crime
+ *
  * THE FOLLOWING MESSAGE IS NOT A LICENSE
  *
  * <barrow@tilde.team> wrote this file.
@@ -81,7 +84,7 @@ void _NN_onClockPulse2() {
 
 class NanoNet {
   private:
-    byte _txRate = 100; // In bits per second
+    byte _txRate = 10; // In bits per second
     // How many divisions of a clock cycle to check for other transmitters...
     byte _caRate = 4; //...before transmitting
     byte _cdRate = 4; //...while transmitting
