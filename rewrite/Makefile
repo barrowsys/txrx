@@ -8,7 +8,7 @@ ARDUINO2_FQBN = "arduino:avr:nano"
 NN_ADDR1 = 0x01
 NN_ADDR2 = 0x02
 DEBUG_LEVEL = -1
-TX_RATE = 200
+TX_RATE = 20
 
 ARDUINO_DIR = $(HOME)/Downloads/arduino-1.8.13
 ARDUINO_CLI = $(ARDUINO_DIR)/bin/arduino-cli
@@ -23,7 +23,7 @@ FLAGS += -D_TX_RATE=$(TX_RATE)
 BUILD_FLAGS = $(FLAGS)
 
 WATCH = watchexec
-WATCH_FLAGS = --on-busy-update restart 
+WATCH_FLAGS = --on-busy-update restart --exts h,ino,Makefile,cpp
 WATCH_COMMAND = make upload serial
 
 DEVICE_2 = compile_2 upload_2 watch_2 serial_2

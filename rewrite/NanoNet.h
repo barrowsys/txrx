@@ -39,15 +39,13 @@ typedef enum State {
 
 class NanoNet {
 	private:
-		short _tx_rate = _TX_RATE; // Clock rate in bits per second
-		// How many times during one clock cycle to check for busy line...
-		short _ca_rate = 4; //...before transmitting (collision avoidance)
-		short _cd_rate = 4; //...while transmitting (collision detection)
+		byte _clock_pin;
+		byte _data_pin;
 		byte _status_pin = 13;
 		byte _address;
 		NanoNetState _state = NN_IDLE;
-		bool _send_byte(byte tx_byte);
 		Crc16 crc;
+		bool _send_byte(byte tx_byte);
 		void init(byte address, byte clock_pin, byte data_pin, byte status_pin) {
 			_address = address;
 			_clock_pin = clock_pin;
@@ -58,8 +56,10 @@ class NanoNet {
 			pinMode(_status_pin, OUTPUT);
 		}
 	public:
-		byte _clock_pin;
-		byte _data_pin;
+		short _tx_rate = _TX_RATE; // Clock rate in bits per second
+		// How many times during one clock cycle to check for busy line...
+		short _ca_rate = 4; //...before transmitting (collision avoidance)
+		short _cd_rate = 4; //...while transmitting (collision detection)
 		inline NanoNet(byte address, byte clock_pin, byte data_pin) {
 			init(address, clock_pin, data_pin, 13);
 		}
@@ -80,7 +80,12 @@ class NanoNet {
 #define DELAY(us) if(us <= 16000) { delayMicroseconds(us); } else { delay(us / 1000); }
 
 #define _NN_SEND_BYTE(TX_BYTE) 			\
-	if(digitalRead(_OPT_PIN_3) == LOW) {\
+	if(should_cancel()) { 				\
+		pinMode(_clock_pin, INPUT); 	\
+		digitalWrite(_clock_pin, LOW); 	\
+		pinMode(_data_pin, INPUT); 		\
+		digitalWrite(_data_pin, LOW); 	\
+		digitalWrite(_status_pin, 0); 	\
 		return -1; 						\
 	} 									\
 	if(!_send_byte(TX_BYTE)) { 			\
@@ -174,12 +179,12 @@ BEGIN_PREAMBLE:
 	for(int byte_idx = 0; byte_idx < strlen(payload); byte_idx++) {
 		char tx_byte = payload[byte_idx];
 		_NN_SEND_BYTE(tx_byte);
-#define INTENTIONAL_ERROR
+/* #define INTENTIONAL_ERROR */
 #ifdef INTENTIONAL_ERROR
 		if(inject_error && byte_idx == 10) { inject_error = false; continue; }
 #endif
 		crc.updateCrc(tx_byte);
-	}
+}
 	_LOG_BYTE_SEP();
 
 	LOG_INFO(F("Sending trailer"));
@@ -271,7 +276,7 @@ BEGIN_RECIEVE_FRAME:
 	digitalWrite(_data_pin, LOW);
 	crc.clearCrc();
 	while(true) {
-		if(digitalRead(_OPT_PIN_3) == LOW) {
+		if(should_cancel()) {
 			return -1;
 		}
 		if(NN_new_bit == true) {

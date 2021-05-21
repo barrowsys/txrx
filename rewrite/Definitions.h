@@ -19,12 +19,6 @@
 
 #define _CLOCK_PIN 2
 #define _DATA_PIN 4
-#define _OPT_PIN_1 6
-#define _OPT_PIN_2 5
-#define _OPT_PIN_3 7
-#define _OPT_PIN_4 10
-#define _LOW_PIN_1 9
-#define _LOW_PIN_2 12
 #define _STATUS_PIN 13
 
 // String versions of compiler flags
@@ -49,6 +43,8 @@ void printb(byte b, __FlashStringHelper* post) 			{ printb(b); Serial.print(post
 #define printo(pin) if(pin) { Serial.print(F("ON")); } else { Serial.print(F("OFF")); }
 #define printpinln(pin) printpin(pin); Serial.println();
 #define printoln(pin) printo(pin); Serial.println();
+#define printbit(pin) if(pin) { Serial.print(F("1")); } else { Serial.print(F("0")); }
+#define printbitln(pin) printbit(pin); Serial.println();
 
 // Logging Helpers
 short DEBUG_LEVEL = _DEBUG_LEVEL;
@@ -58,7 +54,7 @@ short DEBUG_LEVEL = _DEBUG_LEVEL;
 #define LOG_INFO(...) 	if(DEBUG_LEVEL >= 3) { Serial.println(__VA_ARGS__); }
 #define LOG_TRACE(...) 	if(DEBUG_LEVEL >= 4) { Serial.println(__VA_ARGS__); }
 #define LOG_BYTE(MSG) 	if(DEBUG_LEVEL >= 4) { printbln(MSG, " "); }
-#define LOG_BIT(MSG) 	if(DEBUG_LEVEL >= 4) { if(MSG) { Serial.println(F("1")); } else { Serial.println(F("0")); } }
+#define LOG_BIT(MSG) 	if(DEBUG_LEVEL >= 4) { printbitln(MSG); }
 #define LOG_PIN(MSG) 	if(DEBUG_LEVEL >= 4) { print_pinln(MSG); }
 #define _LOG_FATAL(...) if(DEBUG_LEVEL >= 0) { Serial.print(__VA_ARGS__); }
 #define _LOG_ERROR(...) if(DEBUG_LEVEL >= 1) { Serial.print(__VA_ARGS__); }
@@ -66,7 +62,7 @@ short DEBUG_LEVEL = _DEBUG_LEVEL;
 #define _LOG_INFO(...) 	if(DEBUG_LEVEL >= 3) { Serial.print(__VA_ARGS__); }
 #define _LOG_TRACE(...) if(DEBUG_LEVEL >= 4) { Serial.print(__VA_ARGS__); }
 #define _LOG_BYTE(MSG) 	if(DEBUG_LEVEL >= 4) { printb(MSG, " "); }
-#define _LOG_BIT(MSG) 	if(DEBUG_LEVEL >= 4) { if(MSG) { Serial.print(F("1")); } else { Serial.print(F("0")); } }
+#define _LOG_BIT(MSG) 	if(DEBUG_LEVEL >= 4) { printbit(MSG); }
 #define _LOG_PIN(MSG) 	if(DEBUG_LEVEL >= 4) { print_pin(MSG); }
 #define _LOG_BYTE_SEP() if(DEBUG_LEVEL >= 4) { Serial.println(); }
 #define IFFATAL(BODY) 	if(DEBUG_LEVEL >= 0) { BODY; }
@@ -75,3 +71,6 @@ short DEBUG_LEVEL = _DEBUG_LEVEL;
 #define IFINFO(BODY) 	if(DEBUG_LEVEL >= 3) { BODY; }
 #define IFTRACE(BODY) 	if(DEBUG_LEVEL >= 4) { BODY; }
 
+// Hoisted Functions
+bool should_cancel();
+/* void read_remote(*byte array); */
