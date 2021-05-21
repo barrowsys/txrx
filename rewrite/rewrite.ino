@@ -13,7 +13,7 @@
  * -Ezra Barrow
  */
 #include "Definitions.h"
-#include "NanoNet.h"
+#include "NanoNet.orig.h"
 
 char *message = "Debug Message";
 char *message1 = "Hello World!!!";
@@ -25,28 +25,13 @@ char rx_buf[256];
 char *srx_buf = &(rx_buf[0]);
 char rx_addr;
 bool remote[8];
-/* #if MY_ADDR == 2 */
-/* char set_command = 'e'; */
-/* #else */
 char set_command = 0;
-/* #endif */
 bool use_rack = 0;
 volatile int bits_n = 0;
-NanoNet nanonet = NanoNet(MY_ADDR, _CLOCK_PIN, _DATA_PIN);
+NanoNetOrig nanonet;
 
 void clear_rx_buf() {
 	memset(rx_buf, 0, 256);
-}
-
-void isr() {
-	if(digitalRead(_CLOCK_PIN) != LOW) {
-		bool rx_bit = digitalRead(_DATA_PIN) == HIGH;
-		NN_rx_buf.s = NN_rx_buf.s << 1;
-		if(rx_bit) {
-			NN_rx_buf.s |= 0x01;
-		}
-		NN_new_bit = true;
-	}
 }
 
 void set_msg(byte msg) {
@@ -65,6 +50,7 @@ void set_msg(byte msg) {
 void setup() {
 	Serial.begin(9600);
 	Serial.println(F("\n\n\n\n\rI'm "MY_ADDR_S));
+	nanonet.init(MY_ADDR, _CLOCK_PIN, _DATA_PIN);
 	pinMode(_CLOCK_PIN, INPUT);
 	pinMode(_DATA_PIN, INPUT);
 	pinMode(_STATUS_PIN, OUTPUT);
@@ -72,14 +58,13 @@ void setup() {
 	for(byte i = 5; i <= 12; i++) {
 		pinMode(i, INPUT_PULLUP);
 	}
-	attachInterrupt(digitalPinToInterrupt(_CLOCK_PIN), isr, RISING);
 }
 
 bool should_cancel() {
 	if(!digitalRead(8)) {
-		nanonet._tx_rate = 1;
+		nanonet.tx_rate = 1;
 	} else {
-		nanonet._tx_rate = _TX_RATE;
+		nanonet.tx_rate = _TX_RATE;
 	}
 	return !digitalRead(6);
 }
@@ -102,9 +87,9 @@ void parse_input() {
 	set_msg(((remote[2] << 1) | remote[3]) + '0');
 	tx_buf = messageptr;
 	if(remote[4]) {
-		nanonet._tx_rate = 1;
+		nanonet.tx_rate = 1;
 	} else {
-		nanonet._tx_rate = _TX_RATE;
+		nanonet.tx_rate = _TX_RATE;
 	}
 	if(set_command == '+' || set_command == 'E') {
 		set_command = 'e';
@@ -175,7 +160,7 @@ void print_remote() {
 	Serial.print(rx_buf);
 	Serial.println(F("\""));
 	Serial.print(F("Baud Rate: "));
-	Serial.print(nanonet._tx_rate, DEC);
+	Serial.print(nanonet.tx_rate, DEC);
 	Serial.println(F("bps"));
 	Serial.println();
 }
@@ -258,7 +243,7 @@ void loop() {
 		case 't':
 			if(use_rack) {
 				LOG_ERROR(F("Sending to "OTHER_ADDR_S" with RACK..."));
-				options = OPT_RACK;
+				options = OptRack;
 			} else {
 				_LOG_ERROR(F("Sending to "OTHER_ADDR_S"..."));
 			}
@@ -293,7 +278,7 @@ void loop() {
 				IFERROR(printb(F("back to 0x"), rx_addr, F(",,,")));
 				LOG_FATAL();
 				if(use_rack) {
-					options = OPT_RACK;
+					options = OptRack;
 				}
 				do {
 					r = nanonet.sendFrame(rx_buf, rx_addr, options);

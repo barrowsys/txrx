@@ -10,7 +10,7 @@ NN_ADDR2 = 0x02
 DEBUG_LEVEL = -1
 TX_RATE = 20
 
-ARDUINO_DIR = $(HOME)/Downloads/arduino-1.8.13
+ARDUINO_DIR = $(HOME)/Apps/arduino
 ARDUINO_CLI = $(ARDUINO_DIR)/bin/arduino-cli
 COMPILE_FLAGS = -b $(ARDUINO_FQBN) --build-path $(BUILD_DIR) --clean
 UPLOAD_FLAGS  = $(COMPILE_FLAGS) --upload --verify -p $(PORT)
