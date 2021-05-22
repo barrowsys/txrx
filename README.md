@@ -17,7 +17,7 @@ device 2 is defined by Makefile.2, and can be loaded with `make DEVICE=2`.
 setting make to load the device files directly (`make -f Makefile.2`) also works.  
 u can make as many device files as u want.  
 
-###### Frame Structure
+### Frame Structure
 |      | Preamble | Header  | STX  | Payload     | ETX  | Trailer | EOT  |
 |------|----------|---------|------|-------------|------|---------|------|
 | Data | 0xFF01   | 4 bytes | 0x02 | 0-255 bytes | 0x03 | 3 bytes | 0x04 |
@@ -30,6 +30,7 @@ u can make as many device files as u want.
 | Trailer | CRC     | Reply  |
 |---------|---------|--------|
 | Data    | 2 bytes | 1 byte |
+
 Reply is transmitted by the reciever of a frame if the RACK bit was set.
 Otherwise, if RACK bit is unset, the byte is skipped.
 Valid values are 0x06 ACK (indicating successful RX) or 0x15 NACK (requesting retransmission)
