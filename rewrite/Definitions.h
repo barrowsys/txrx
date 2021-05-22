@@ -20,19 +20,15 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+#ifndef MAKE_OVERRIDE
 #include "/home/barrow/Apps/arduino/hardware/arduino/avr/cores/arduino/Arduino.h"
 #include "/home/barrow/Apps/arduino/hardware/arduino/avr/variants/standard/pins_arduino.h"
-
-#ifndef OVERRIDE_DEFS
 #define _CLOCK_PIN 2
 #define _DATA_PIN 4
 #define _STATUS_PIN 13
 #define _TX_RATE 20
 #define _MAX_DEBUG 4
-#endif
-
-#ifndef digitalPinToInterrupt
-#define digitalPinToInterrupt(...)
+#define _DEBUG_LEVEL 4
 #endif
 
 #define FULL_TICK (1000000 / tx_rate)
@@ -132,6 +128,10 @@ short DEBUG_LEVEL = _DEBUG_LEVEL;
 
 // Hoisted Functions
 bool should_cancel();
-/* void read_remote(*byte array); */
+
+union twobytes {
+	volatile short s;
+	volatile byte b[2];
+};
 
 #endif

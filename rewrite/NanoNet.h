@@ -16,14 +16,11 @@
  * you can buy me a beer, tea, or something stronger.
  * -Ezra Barrow
  */
+#ifndef NANONET_H
+#define NANONET_H
 
 #include "Definitions.h"
 #include "Crc16.h"
-
-union twobytes {
-	volatile short s;
-	volatile byte b[2];
-};
 
 typedef enum State {
 	NN_IDLE,
@@ -62,3 +59,5 @@ class NanoNet {
 		byte sendFrame(char *payload, byte destination, byte options);
 		byte recieveFrame(char *buf);
 };
+
+#endif

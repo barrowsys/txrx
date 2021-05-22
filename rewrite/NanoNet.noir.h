@@ -1,7 +1,7 @@
 /**
  * @author      : Ezra Barrow (barrow@tilde.team)
- * @file        : Original NanoNet Impl as a subclass
- * @created     : Friday May 21, 2021 17:33:56 EDT
+ * @file        : NanoNet.noi
+ * @created     : Friday May 21, 2021 20:22:25 EDT
  *
  * THIS FILE IS LICENSED UNDER THE FOLLOWING TERMS
  * 
@@ -17,53 +17,42 @@
  * -Ezra Barrow
  */
 
-
 #include "Definitions.h"
 #include "NanoNet.h"
 
-volatile twobytes NN_rx_buf;
-volatile bool NN_new_bit;
-
-/* this implementation uses an interrupt on the clock pin.
- * this makes it much more reliable at high speed but also 
- * restricts you to pins 2 and 3 for clock.
+/* this implementation does NOT use interrupts. any pin can be used for clock
+ * hypothetically this would have more errors at high line speeds but it seems to handle it.
  */
-class NanoNetOrig: public NanoNet {
+class NanoNetNoir: public NanoNet {
 	private:
 		void reset_send();
-		bool send_byte(byte tx_byte); 
+		byte send_byte(byte tx_byte); 
+		bool recieve_bit();
+		bool last_clock;
+		twobytes NN_rx_buf;
 	public:
-		static void isr();
 		void init(byte _address, byte _clock_pin, byte _data_pin);
 		byte sendFrame(char *payload, byte destination, byte options);
 		byte recieveFrame(char *buf);
 };
 
-void NanoNetOrig::init(byte _address, byte _clock_pin, byte _data_pin) {
+void NanoNetNoir::init(byte _address, byte _clock_pin, byte _data_pin) {
 	NanoNet::init(_address, _clock_pin, _data_pin);
-	attachInterrupt(digitalPinToInterrupt(clock_pin), NanoNetOrig::isr, RISING);
 }
 
-void NanoNetOrig::isr() {
-	if(digitalRead(_CLOCK_PIN) != LOW) {
-		bool rx_bit = digitalRead(_DATA_PIN) == HIGH;
-		NN_rx_buf.s = NN_rx_buf.s << 1;
-		if(rx_bit) {
-			NN_rx_buf.s |= 0x01;
-		}
-		NN_new_bit = true;
-	}
-}
-
-void NanoNetOrig::reset_send() {
+void NanoNetNoir::reset_send() {
 	pinMode(clock_pin, INPUT);
 	digitalWrite(clock_pin, LOW);
 	pinMode(data_pin, INPUT);
 	digitalWrite(data_pin, LOW);
 	digitalWrite(status_pin, LOW);
+	state = NN_IDLE;
 }
 
-bool NanoNetOrig::send_byte(byte tx_byte) {
+byte NanoNetNoir::send_byte(byte tx_byte) {
+	if(should_cancel()) {
+		return -1;
+	}
 	_LOG_BYTE(tx_byte);
 	for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
 		bool tx_bit = tx_byte & (0x80 >> bit_idx);
@@ -73,40 +62,38 @@ bool NanoNetOrig::send_byte(byte tx_byte) {
 			DELAY(HALF_TICK / cd_rate);
 			if(digitalRead(clock_pin)) {
 				LOG_ERROR(F("Collision detected, aborting send"));
-				return false;
+				return 1;
 			}
 		}
 		digitalWrite(clock_pin, HIGH);
 		DELAY(HALF_TICK);
 		digitalWrite(clock_pin, LOW);
 	}
-	return true;
+	return 0;
 }
-#define _NNO_SEND_BYTE(TX_BYTE)\
-	if(should_cancel()) {\
+#define _NNN_SEND_BYTE(TX_BYTE)\
+	r = send_byte(TX_BYTE);\
+	if(r != 0) {\
 		reset_send();\
-		return -1;\
-	}\
-	if(!send_byte(TX_BYTE)) {\
-		reset_send();\
-		return 1;\
+		return r;\
 	}\
 
 #ifndef INTENTIONAL_ERROR
 #define INTENTIONAL_ERROR false
 #endif
 
-byte NanoNetOrig::sendFrame(char *payload, byte destination, byte options) {
+byte NanoNetNoir::sendFrame(char *payload, byte destination, byte options) {
 	state = NN_TX;
 #if INTENTIONAL_ERROR
 	bool inject_error = true;
 #endif
+	byte r = 0;
 	uint8_t try_count = 0;
 	LOG_INFO(F("Checking for busy bus"));
 	digitalWrite(clock_pin, LOW);
 	digitalWrite(data_pin, LOW);
 	// Make sure the bus isnt in use
-	for (int ca_idx = 0; ca_idx < ca_rate; ca_idx++) {
+	for (int ca_idx = 0; ca_idx < ca_rate*2; ca_idx++) {
 		DELAY(FULL_TICK / ca_rate);
 		// If the clock pin goes high at any point, 
 		if (digitalRead(clock_pin)) {
@@ -120,20 +107,20 @@ byte NanoNetOrig::sendFrame(char *payload, byte destination, byte options) {
 	pinMode(data_pin, OUTPUT);
 
 BEGIN_PREAMBLE:
-	_NNO_SEND_BYTE(0);
+	_NNN_SEND_BYTE(0);
 	LOG_INFO(F("Sending preamble"));
-	_NNO_SEND_BYTE(0xFF);
-	_NNO_SEND_BYTE(0x01); // Start of Header (SOH)
+	_NNN_SEND_BYTE(0xFF);
+	_NNN_SEND_BYTE(0x01); // Start of Header (SOH)
 	_LOG_BYTE_SEP();
 
 	crc.clearCrc();
 
 	LOG_INFO(F("Sending header"));
 	crc.clearCrc();
-	_NNO_SEND_BYTE(destination);
-	_NNO_SEND_BYTE(address);
-	_NNO_SEND_BYTE(strlen(payload));
-	_NNO_SEND_BYTE(options);
+	_NNN_SEND_BYTE(destination);
+	_NNN_SEND_BYTE(address);
+	_NNN_SEND_BYTE(strlen(payload));
+	_NNN_SEND_BYTE(options);
 	crc.updateCrc(destination);
 	crc.updateCrc(address);
 	crc.updateCrc(strlen(payload));
@@ -141,10 +128,10 @@ BEGIN_PREAMBLE:
 	_LOG_BYTE_SEP();
 
 	LOG_INFO(F("Sending payload"));
-	_NNO_SEND_BYTE(0x02); // Start of Text (STX)
+	_NNN_SEND_BYTE(0x02); // Start of Text (STX)
 	for(int byte_idx = 0; byte_idx < strlen(payload); byte_idx++) {
 		char tx_byte = payload[byte_idx];
-		_NNO_SEND_BYTE(tx_byte);
+		_NNN_SEND_BYTE(tx_byte);
 #if INTENTIONAL_ERROR
 		if(inject_error && byte_idx == 10) {
 			inject_error = false;
@@ -156,11 +143,11 @@ BEGIN_PREAMBLE:
 	_LOG_BYTE_SEP();
 
 	LOG_INFO(F("Sending trailer"));
-	_NNO_SEND_BYTE(0x03); // End of Text (ETX)
+	_NNN_SEND_BYTE(0x03); // End of Text (ETX)
 	twobytes crc_val;
 	crc_val.s = crc.getCrc();
-	_NNO_SEND_BYTE(crc_val.b[0]);
-	_NNO_SEND_BYTE(crc_val.b[1]);
+	_NNN_SEND_BYTE(crc_val.b[0]);
+	_NNN_SEND_BYTE(crc_val.b[1]);
 	if(options & OptRack) {
 		_LOG_BYTE_SEP();
 		pinMode(data_pin, INPUT);
@@ -195,12 +182,7 @@ BEGIN_PREAMBLE:
 			try_count++;
 			if(try_count > 5) {
 				LOG_FATAL(F("Could not reach a reciever in 5 tries"));
-				pinMode(clock_pin, INPUT);
-				pinMode(data_pin, INPUT);
-				digitalWrite(clock_pin, LOW);
-				digitalWrite(data_pin, LOW);
-				digitalWrite(status_pin, LOW);
-				state = NN_IDLE;
+				reset_send();
 				return 2;
 			}
 			IFERROR(F("Could not reach a receiver"));
@@ -210,20 +192,31 @@ BEGIN_PREAMBLE:
 			goto BEGIN_PREAMBLE;
 		}
 	}
-	_NNO_SEND_BYTE(0x04); // End of Transmission (EOT)
+	_NNN_SEND_BYTE(0x04); // End of Transmission (EOT)
 	_LOG_BYTE_SEP();
 
 	LOG_INFO(F("Cleaning up"));
-	pinMode(clock_pin, INPUT);
-	pinMode(data_pin, INPUT);
-	digitalWrite(clock_pin, LOW);
-	digitalWrite(data_pin, LOW);
-	digitalWrite(status_pin, LOW);
-	state = NN_IDLE;
+	reset_send();
 	return 0;
 }
 
-byte NanoNetOrig::recieveFrame(char *buf) {
+bool NanoNetNoir::recieve_bit() {
+	bool clock = digitalRead(clock_pin);
+	if(clock != last_clock) {
+		last_clock = clock;
+		if(clock == HIGH) {
+			bool rx_bit = digitalRead(_DATA_PIN) == HIGH;
+			NN_rx_buf.s = NN_rx_buf.s << 1;
+			if(rx_bit) {
+				NN_rx_buf.s |= 0x01;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+byte NanoNetNoir::recieveFrame(char *buf) {
 	int buf_pos = 0;
 	int bit_pos = 0;
 	twobytes rx_crc;
@@ -240,12 +233,12 @@ BEGIN_RECIEVE_FRAME:
 	pinMode(data_pin, INPUT);
 	digitalWrite(data_pin, LOW);
 	crc.clearCrc();
+	NN_rx_buf.s = 0;
 	while(true) {
 		if(should_cancel()) {
 			return -1;
 		}
-		if(NN_new_bit == true) {
-			NN_new_bit = false;
+		if(recieve_bit() == true) {
 			switch(state) {
 			case NN_RX_WAITING:
 				if(NN_rx_buf.s == 0xFF01) {
