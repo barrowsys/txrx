@@ -243,10 +243,7 @@ BEGIN_RECIEVE_FRAME:
 	digitalWrite(data_pin, LOW);
 	crc.clearCrc();
 	NN_rx_buf.s = 0;
-	while(true) {
-		if(should_cancel()) {
-			return -1;
-		}
+	while(!should_cancel()) {
 		if(recieve_bit() == true) {
 			switch(state) {
 			case NN_RX_WAITING:
@@ -409,6 +406,7 @@ BEGIN_NN_RX_REPLY:
 			}
 		}
 	}
+	return -1;
 }
 
 #endif
