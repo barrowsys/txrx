@@ -1,0 +1,12 @@
+PORT = /dev/ttyUSB0
+PORT_SPEED = 9600
+ARDUINO_FQBN = "arduino:avr:nano"
+
+NN_ADDR1 	= 0x01
+NN_ADDR2 	= 0x02
+
+ifndef DEVICE
+	DEVICE = 1
+	DEVICE_LOADED = 1
+	include Makefile
+endif
