@@ -1,6 +1,6 @@
 /**
  * @author      : Ezra Barrow (barrow@tilde.team)
- * @file	: NanoNet.noi
+ * @file        : NanoNet.noir
  * @created     : Friday May 21, 2021 20:22:25 EDT
  *
  * THIS FILE IS LICENSED UNDER THE FOLLOWING TERMS

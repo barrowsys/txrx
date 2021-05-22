@@ -1,6 +1,6 @@
 /**
  * @author      : Ezra Barrow (barrow@tilde.team)
- * @file	: Original NanoNet Impl as a subclass
+ * @file        : Original NanoNet Impl as a subclass
  * @created     : Friday May 21, 2021 17:33:56 EDT
  *
  * THIS FILE IS LICENSED UNDER THE FOLLOWING TERMS

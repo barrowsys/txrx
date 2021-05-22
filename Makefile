@@ -1,9 +1,9 @@
 CLOCK_PIN 	= 2
 DATA_PIN 	= 4
 STATUS_PIN 	= 13
-DEBUG_C 	= -1 #compiletime debug level
-DEBUG_R 	= 4 #runtime debug level
-TX_RATE 	= 28800
+DEBUG_C 	= 4 #compiletime debug level
+DEBUG_R 	= 0 #runtime debug level
+TX_RATE 	= 10
 
 ifndef DEVICE
 	DEVICE = 1
