@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------
 // CRC16 support class
 // Based on various examples found on the web
-// Copyright (C) 2014 Vincenzo Mennella (see license.txt)
+// Copyright (C) 2014 Vincenzo Mennella
 // History
 //  0.1.0 31/05/2014:   First public code release
 //  0.1.1 17/12/2014:   Minor revision and commented code
