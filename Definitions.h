@@ -46,12 +46,12 @@ void printb(byte b) {
 	if(b < 0x10) { Serial.print(F("0")); }
 	Serial.print(b, HEX);
 }
-void printb(char* pre, byte b) 				{ Serial.print(pre); printb(b); }
-void printb(char* pre, byte b, char* post) 	{ Serial.print(pre); printb(b); Serial.print(post); }
-void printb(byte b, char* post) 			{ printb(b); Serial.print(post); }
-void printb(__FlashStringHelper* pre, byte b) 				{ Serial.print(pre); printb(b); }
-void printb(__FlashStringHelper* pre, byte b, __FlashStringHelper* post) 	{ Serial.print(pre); printb(b); Serial.print(post); }
-void printb(byte b, __FlashStringHelper* post) 			{ printb(b); Serial.print(post); }
+void printb(char* pre, byte b)                 { Serial.print(pre); printb(b); }
+void printb(byte b, char* post)                { printb(b); Serial.print(post); }
+void printb(char* pre, byte b, char* post)     { Serial.print(pre); printb(b); Serial.print(post); }
+void printb(__FlashStringHelper* pre, byte b)  { Serial.print(pre); printb(b); }
+void printb(byte b, __FlashStringHelper* post) { printb(b); Serial.print(post); }
+void printb(__FlashStringHelper* pre, byte b, __FlashStringHelper* post) { Serial.print(pre); printb(b); Serial.print(post); }
 #define printbln(...) printb(__VA_ARGS__); Serial.println();
 #define printpin(pin) if(pin) { Serial.print(F("HIGH")); } else { Serial.print(F("LOW")); }
 #define printo(pin) if(pin) { Serial.print(F("ON")); } else { Serial.print(F("OFF")); }

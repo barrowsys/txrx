@@ -48,42 +48,9 @@ void setup() {
 	pinMode(_CLOCK_PIN, INPUT);
 	pinMode(_DATA_PIN, INPUT);
 	pinMode(_STATUS_PIN, OUTPUT);
-	/* Serial.print(F("Tx Rate: ")); */
-	/* Serial.print(_TX_RATE, DEC); */
-	/* Serial.print(F("bps, ")); */
-	/* Serial.print(500000 / _TX_RATE, DEC); */
-	/* Serial.println(F("us")); */
-	#define ECHOS 10
-	#define ECHOSM 100
-	for(int m = 0; m < ECHOSM; m++) {
-		#if DEVICE == 1
-			set_msg(3);
-			for(int i = 0; i < ECHOS; i++) {
-				/* recieve(); */
-				echo_full();
-			}
-		#elif DEVICE == 2
-			set_msg(m % 4);
-			delay(500);
-			transmit();
-			set_msg(3);
-			for(int i = 1; i < ECHOS; i++) {
-				/* transmit(); */
-				echo_full();
-			}
-			recieve();
-		#endif
-	}
-	Serial.println();
-	Serial.print(F("Tx Rate: "));
-	Serial.print(_TX_RATE, DEC);
-	Serial.print(F("bps, "));
-	Serial.print(500000 / _TX_RATE, DEC);
-	Serial.println(F("us"));
-	Serial.print(F("Echos: "));
-	Serial.println(ECHOS * ECHOSM, DEC);
-	Serial.print(F("Failures: "));
-	Serial.println(failures, DEC);
+	#ifdef RUN_TEST
+	#include RUN_TEST
+	#endif
 }
 
 void loop() {

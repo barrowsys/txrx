@@ -1,9 +1,24 @@
+###############################################################
+# THIS FILE IS LICENSED UNDER THE FOLLOWING TERMS             #
+#                                                             #
+# this code may not be used for any purpose. be gay, do crime #
+#                                                             #
+# THE FOLLOWING MESSAGE IS NOT A LICENSE                      #
+#                                                             #
+# <barrow@tilde.team> wrote this file.                        #
+# by reading this message, you are reading "TRANS RIGHTS".    #
+# this file and the content within it is the queer agenda.    #
+# if we meet some day, and you think this stuff is worth it,  #
+# you can buy me a beer, tea, or something stronger.          #
+# -Ezra Barrow                                                #
+###############################################################
+
 CLOCK_PIN 	= 2
 DATA_PIN 	= 4
 STATUS_PIN 	= 13
-DEBUG_C 	= 4 #compiletime debug level
+DEBUG_C 	= -1 #compiletime debug level
 DEBUG_R 	= 0 #runtime debug level
-TX_RATE 	= 10
+TX_RATE 	= 80
 
 ifndef DEVICE
 	DEVICE = 1
@@ -29,6 +44,8 @@ FLAGS += -D_MAX_DEBUG=$(DEBUG_C)
 FLAGS += -D_DEBUG_LEVEL=$(DEBUG_R)
 BUILD_FLAGS = $(FLAGS)
 
+TEST_FILE = "28k.h"
+
 WATCH = watchexec
 WATCH_FLAGS = --on-busy-update restart #--exts h,ino,Makefile,cpp
 WATCH_COMMAND = make upload serial
@@ -44,8 +61,14 @@ compile: mktemp
 upload: mktemp
 	$(ARDUINO_CLI) compile $(UPLOAD_FLAGS) --build-property "build.extra_flags=$(BUILD_FLAGS)"
 
+upload_test: mktemp
+	$(ARDUINO_CLI) compile $(UPLOAD_FLAGS) --build-property "build.extra_flags=$(BUILD_FLAGS) -DRUN_TEST=\"tests/$(TEST_FILE)\""
+
 serial:
 	cu -s $(PORT_SPEED) -l $(PORT)
 
 watch:
 	$(WATCH) $(WATCH_FLAGS) "$(WATCH_COMMAND)"
+
+watch_test:
+	$(WATCH) $(WATCH_FLAGS) "make upload_test serial"

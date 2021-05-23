@@ -164,7 +164,7 @@ BEGIN_PREAMBLE:
 		}
 #endif
 		crc.updateCrc(tx_byte);
-}
+	}
 	_LOG_BYTE_SEP();
 
 	LOG_INFO(F("Sending trailer"));
