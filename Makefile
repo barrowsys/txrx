@@ -17,7 +17,7 @@ CLOCK_PIN 	= 2
 DATA_PIN 	= 4
 STATUS_PIN 	= 13
 TX_RATE 	= 20
-DEBUG_C 	= 3 #compiletime debug level
+DEBUG_C 	= -1 #compiletime debug level
 DEBUG_R 	= 4 #runtime debug level
 
 ifndef DEVICE
@@ -40,7 +40,7 @@ FLAGS += -DNN_DATA_PIN=$(DATA_PIN)
 FLAGS += -DNN_STATUS_PIN=$(STATUS_PIN)
 FLAGS += -DNN_TX_RATE=$(TX_RATE)
 FLAGS += -DLOG_LEVEL_C=$(DEBUG_C)
-FLAGS += -DLOG_LEVEL_R=$(DEBUG_C)
+FLAGS += -DLOG_LEVEL_R=$(DEBUG_R)
 BUILD_FLAGS = $(FLAGS)
 
 WATCH = watchexec

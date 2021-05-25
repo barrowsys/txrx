@@ -41,31 +41,36 @@ inline void printb(byte b) { printn(b, 16, 2); }
 #define LOG_LEVEL_C 4
 #endif
 short DEBUG_LEVEL = LOG_LEVEL_R;
+#if LOG_LEVEL_C >= 0
 #define IFFATAL(BODY) 	if(DEBUG_LEVEL >= 0) { BODY; }
-#define IFERROR(BODY) 	if(DEBUG_LEVEL >= 1) { BODY; }
-#define IFWARN(BODY) 	if(DEBUG_LEVEL >= 2) { BODY; }
-#define IFINFO(BODY) 	if(DEBUG_LEVEL >= 3) { BODY; }
-#define IFTRACE(BODY) 	if(DEBUG_LEVEL >= 4) { BODY; }
-#if LOG_LEVEL_C < 0
-#undef  IFFATAL(BODY)
+#else 
 #define IFFATAL(BODY)
 #endif
-#if LOG_LEVEL_C < 1
-#undef  IFERROR(BODY)
+
+#if LOG_LEVEL_C >= 1
+#define IFERROR(BODY) 	if(DEBUG_LEVEL >= 1) { BODY; }
+#else
 #define IFERROR(BODY)
 #endif
-#if LOG_LEVEL_C < 2
-#undef  IFWARN(BODY)
+
+#if LOG_LEVEL_C >= 2
+#define IFWARN(BODY) 	if(DEBUG_LEVEL >= 2) { BODY; }
+#else
 #define IFWARN(BODY)
 #endif
-#if LOG_LEVEL_C < 3
-#undef  IFINFO(BODY)
+
+#if LOG_LEVEL_C >= 3
+#define IFINFO(BODY) 	if(DEBUG_LEVEL >= 3) { BODY; }
+#else
 #define IFINFO(BODY)
 #endif
-#if LOG_LEVEL_C < 4
-#undef  IFTRACE(BODY)
+
+#if LOG_LEVEL_C >= 4
+#define IFTRACE(BODY) 	if(DEBUG_LEVEL >= 4) { BODY; }
+#else
 #define IFTRACE(BODY)
 #endif
+
 #define LOG_FATAL(...) 	IFFATAL(Serial.println(__VA_ARGS__))
 #define _LOG_FATAL(...) IFFATAL(Serial.print(__VA_ARGS__))
 #define LOG_ERROR(...) 	IFERROR(Serial.println(__VA_ARGS__))
@@ -76,8 +81,8 @@ short DEBUG_LEVEL = LOG_LEVEL_R;
 #define _LOG_INFO(...)  IFINFO(Serial.print(__VA_ARGS__))
 #define LOG_TRACE(...) 	IFTRACE(Serial.println(__VA_ARGS__))
 #define _LOG_TRACE(...) IFTRACE(Serial.print(__VA_ARGS__))
-#define LOG_BYTE(MSG) 	IFTRACE(printn(MSG, 16, 2); Serial.println(" ");)
-#define _LOG_BYTE(MSG) 	IFTRACE(printn(MSG, 16, 2); Serial.print(" ");)
+#define LOG_BYTE(MSG) 	IFTRACE(printb(MSG); Serial.println();)
+#define _LOG_BYTE(MSG) 	IFTRACE(printb(MSG); Serial.print(F(" "));)
 #define _LOG_BYTE_SEP() IFTRACE(Serial.println();)
 
 #endif
