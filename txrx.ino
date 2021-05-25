@@ -13,7 +13,15 @@
  * -Ezra Barrow
  */
 
+#define _TASK_MICRO_RES
+#define _TASK_LTS_POINTER
+#define _TASK_STATUS_REQUEST
 #include "Definitions.h"
+#include "Logging.h"
+#include <TaskSchedulerSleepMethods.h>
+#include <TaskScheduler.h>
+#include <TaskSchedulerDeclarations.h>
+#include "NanoNet.h"
 
 char *message = "Debug Message";
 char *message1 = "Hello World!!!";
@@ -21,13 +29,64 @@ char *message2 = "Goodbye Non-world!!!";
 char *message3 = ":3";
 char **messageptr = &message2;
 
+Scheduler ts;
+
+void blink1CB();
+Task tBlink1 (
+	// Interval
+	500 * TASK_MILLISECOND,
+	// Iterations
+	20,
+	// Callback
+	&blink1CB,
+	// Scheduler
+	&ts,
+	// Enable
+	false
+);
+void ticksCB();
+Task tTicks(TASK_SECOND, 10, &ticksCB, &ts, false);
+
+NN::NanoNet nanonet;
+
 void setup() {
 	Serial.begin(9600);
 	Serial.println(F("\n\rI'm "MY_ADDR_S"\n\r"));
+	pinMode(13, OUTPUT);
+	NN::nn_setup(&ts);
+	NN::nn_init(&nanonet);
+	NN::nn_receive(&nanonet);
 	#ifdef RUN_TEST
 	#include RUN_TEST
 	#endif
 }
 
 void loop() {
+	ts.execute();
+}
+
+bool LED_state = false;
+void blink1CB() {
+	if(tBlink1.isFirstIteration()) {
+		_LOG_FATAL(millis(), DEC);
+		LOG_FATAL(F(": Blink1"));
+		LED_state = false;
+	}
+	if(LED_state) {
+		/* LOG_FATAL(F("Turning LED off")); */
+		digitalWrite(13, LOW);
+		LED_state = false;
+	} else {
+		/* LOG_FATAL(F("Turning LED on")); */
+		digitalWrite(13, HIGH);
+		LED_state = true;
+	}
+	if(tBlink1.isLastIteration()) {
+		digitalWrite(13, LOW);
+	}
+}
+
+void ticksCB() {
+	_LOG_FATAL(F("Millis: "));
+	LOG_FATAL(millis(), DEC);
 }

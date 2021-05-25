@@ -23,12 +23,11 @@
 #ifndef MAKE_OVERRIDE
 #include "/home/barrow/Apps/arduino/hardware/arduino/avr/cores/arduino/Arduino.h"
 #include "/home/barrow/Apps/arduino/hardware/arduino/avr/variants/standard/pins_arduino.h"
-#define _CLOCK_PIN 2
-#define _DATA_PIN 4
-#define _STATUS_PIN 13
-#define _TX_RATE 20
-#define _MAX_DEBUG 4
-#define _DEBUG_LEVEL 4
+#define MY_ADDR 1
+#define NN_CLOCK_PIN 2
+#define NN_DATA_PIN 4
+#define NN_STATUS_PIN 13
+#define NN_TX_RATE 20
 #endif
 
 #define ONE_SECOND 1000000
@@ -40,7 +39,6 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 #define MY_ADDR_S STR(MY_ADDR)
-#define OTHER_ADDR_S STR(OTHER_ADDR)
 
 union twobytes {
 	volatile short s;

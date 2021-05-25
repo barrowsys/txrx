@@ -29,38 +29,40 @@ inline void printn(int n, byte base, byte width) {
 	}
 	Serial.print(n, base);
 }
+inline void printb(byte b) { printn(b, 16, 2); }
 #define printnln(...) printn(__VA_ARGS__); Serial.println();
+#define printbln(...) printb(__VA_ARGS__); Serial.println();
 
 // Logging Helpers
-#ifndef _RUNTIME_VERBOSITY
-#define _RUNTIME_VERBOSITY 4
+#ifndef LOG_LEVEL_R
+#define LOG_LEVEL_R 4
 #endif
-#ifndef _COMPILE_VERBOSITY
-#define _COMPILE_VERBOSITY 4
+#ifndef LOG_LEVEL_C
+#define LOG_LEVEL_C 4
 #endif
-short DEBUG_LEVEL = _RUNTIME_VERBOSITY;
+short DEBUG_LEVEL = LOG_LEVEL_R;
 #define IFFATAL(BODY) 	if(DEBUG_LEVEL >= 0) { BODY; }
 #define IFERROR(BODY) 	if(DEBUG_LEVEL >= 1) { BODY; }
 #define IFWARN(BODY) 	if(DEBUG_LEVEL >= 2) { BODY; }
 #define IFINFO(BODY) 	if(DEBUG_LEVEL >= 3) { BODY; }
 #define IFTRACE(BODY) 	if(DEBUG_LEVEL >= 4) { BODY; }
-#if _COMPILE_VERBOSITY < 0
+#if LOG_LEVEL_C < 0
 #undef  IFFATAL(BODY)
 #define IFFATAL(BODY)
 #endif
-#if _COMPILE_VERBOSITY < 1
+#if LOG_LEVEL_C < 1
 #undef  IFERROR(BODY)
 #define IFERROR(BODY)
 #endif
-#if _COMPILE_VERBOSITY < 2
+#if LOG_LEVEL_C < 2
 #undef  IFWARN(BODY)
 #define IFWARN(BODY)
 #endif
-#if _COMPILE_VERBOSITY < 3
+#if LOG_LEVEL_C < 3
 #undef  IFINFO(BODY)
 #define IFINFO(BODY)
 #endif
-#if _COMPILE_VERBOSITY < 4
+#if LOG_LEVEL_C < 4
 #undef  IFTRACE(BODY)
 #define IFTRACE(BODY)
 #endif
